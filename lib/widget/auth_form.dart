@@ -104,9 +104,12 @@ class _AuthCardState extends State<AuthCard> {
                   return null;
                 },),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Password'),
+                decoration: InputDecoration(
+                  
+                  labelText: 'Password'),
                 controller: password,
                 obscureText: true,
+
                 onSaved: (value){
                   _formData['password'] = value as String;
                 },
