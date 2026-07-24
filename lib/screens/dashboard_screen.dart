@@ -1,7 +1,9 @@
+import 'package:ecommerce_app/provider/products.dart';
 import 'package:flutter/material.dart';
 import 'package:ecommerce_app/screens/upload_product_screen.dart';
+import 'package:provider/provider.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   static const routeName = '/dashboard';
@@ -14,40 +16,53 @@ class DashboardScreen extends StatelessWidget {
     _CategoryItem('🌭', false),
   ];
 
-  static const _foods = [
-    _FoodItem(
-      name: 'Noodles',
-      price: '\$24.00',
-      image: '🍜',
-      color: Color(0xFFFFF8B9),
-    ),
-    _FoodItem(
-      name: 'Chocolate',
-      price: '\$15.00',
-      image: '🧁',
-      color: Color(0xFFFFD6C4),
-    ),
-    _FoodItem(
-      name: 'French Fries',
-      price: '\$18.00',
-      image: '🍟',
-      color: Color(0xFFFFB9B5),
-    ),
-    _FoodItem(
-      name: 'Chicken',
-      price: '\$20.00',
-      image: '🍗',
-      color: Color(0xFFFFEAA3),
-    ),
-  ];
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _isLoading = true;
+  String? _loadError;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadProducts);
+  }
+
+  Future<void> _loadProducts() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _loadError = null;
+      });
+    }
+
+    try {
+      await context.read<ProductsProvider>().fetchProducts();
+    } on ProductProviderException catch (error) {
+      if (mounted) setState(() => _loadError = error.message);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _loadError = 'Could not load products. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final products = context.watch<ProductsProvider>().products;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8E8B6),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).pushNamed(UploadProductScreen.routeName);
+        onPressed: () async {
+          await Navigator.of(context).pushNamed(UploadProductScreen.routeName);
+          if (mounted) await _loadProducts();
         },
         icon: const Icon(Icons.add),
         label: const Text('Add product'),
@@ -76,7 +91,7 @@ class DashboardScreen extends StatelessWidget {
                   const _CategoryList(),
                   const SizedBox(height: 32),
                   const Text(
-                    'Recommend Food',
+                    'Products',
                     style: TextStyle(
                       color: Color(0xFF333333),
                       fontFamily: 'Poppins',
@@ -85,7 +100,12 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const _RecommendedGrid(),
+                  _ProductsContent(
+                    products: products,
+                    isLoading: _isLoading,
+                    error: _loadError,
+                    onRetry: _loadProducts,
+                  ),
                 ],
               ),
             ),
@@ -156,7 +176,7 @@ class _SearchBox extends StatelessWidget {
           const Icon(Icons.search_rounded, color: Color(0xFF9C9C9C), size: 34),
           const SizedBox(width: 14),
           Text(
-            'Search Food',
+            'Search Products',
             style: TextStyle(
               color: const Color(0xFF9C9C9C).withValues(alpha: 0.65),
               fontFamily: 'Poppins',
@@ -259,15 +279,65 @@ class _CategoryList extends StatelessWidget {
   }
 }
 
-class _RecommendedGrid extends StatelessWidget {
-  const _RecommendedGrid();
+class _ProductsContent extends StatelessWidget {
+  const _ProductsContent({
+    required this.products,
+    required this.isLoading,
+    required this.error,
+    required this.onRetry,
+  });
+
+  final List<Product> products;
+  final bool isLoading;
+  final String? error;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32),
+          child: Column(
+            children: [
+              Text(error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (products.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Text(
+            'No products available yet.',
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
+          ),
+        ),
+      );
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: DashboardScreen._foods.length,
+      itemCount: products.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 22,
@@ -275,16 +345,16 @@ class _RecommendedGrid extends StatelessWidget {
         childAspectRatio: 0.72,
       ),
       itemBuilder: (context, index) {
-        return _FoodCard(food: DashboardScreen._foods[index]);
+        return _ProductCard(product: products[index]);
       },
     );
   }
 }
 
-class _FoodCard extends StatelessWidget {
-  const _FoodCard({required this.food});
+class _ProductCard extends StatelessWidget {
+  const _ProductCard({required this.product});
 
-  final _FoodItem food;
+  final Product product;
 
   @override
   Widget build(BuildContext context) {
@@ -298,16 +368,14 @@ class _FoodCard extends StatelessWidget {
               top: 56,
               child: Container(
                 decoration: BoxDecoration(
-                  color: food.color,
+                  color: const Color(0xFFFFF8B9),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.fromLTRB(12, 88, 12, 16),
+                padding: const EdgeInsets.fromLTRB(12, 96, 12, 16),
                 child: Column(
                   children: [
-                    const _RatingRow(),
-                    const SizedBox(height: 8),
                     Text(
-                      food.name,
+                      product.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
@@ -330,7 +398,7 @@ class _FoodCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          food.price,
+                          '\$${product.price.toStringAsFixed(2)}',
                           style: const TextStyle(
                             color: Color(0xFF333333),
                             fontFamily: 'Poppins',
@@ -349,7 +417,7 @@ class _FoodCard extends StatelessWidget {
               child: SizedBox(
                 height: 138,
                 width: constraints.maxWidth,
-                child: FittedBox(fit: BoxFit.contain, child: Text(food.image)),
+                child: _ProductImage(imageUrl: product.imageUrl),
               ),
             ),
           ],
@@ -359,31 +427,31 @@ class _FoodCard extends StatelessWidget {
   }
 }
 
-class _RatingRow extends StatelessWidget {
-  const _RatingRow();
+class _ProductImage extends StatelessWidget {
+  const _ProductImage({required this.imageUrl});
+
+  final String imageUrl;
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.star_rounded, color: Color(0xFFFF2F00), size: 18),
-        SizedBox(width: 3),
-        Flexible(
-          child: Text(
-            '4.9  (54 Reviews)',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Color(0xFF565656),
-              fontFamily: 'Poppins',
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
+    if (imageUrl.isEmpty) return const _ProductPlaceholder();
+
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => const _ProductPlaceholder(),
+    );
+  }
+}
+
+class _ProductPlaceholder extends StatelessWidget {
+  const _ProductPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const FittedBox(
+      fit: BoxFit.contain,
+      child: Icon(Icons.shopping_bag_rounded, color: Color(0xFFFFB000)),
     );
   }
 }
@@ -393,18 +461,4 @@ class _CategoryItem {
 
   final String icon;
   final bool isSelected;
-}
-
-class _FoodItem {
-  const _FoodItem({
-    required this.name,
-    required this.price,
-    required this.image,
-    required this.color,
-  });
-
-  final String name;
-  final String price;
-  final String image;
-  final Color color;
 }
