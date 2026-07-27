@@ -2,6 +2,7 @@ import 'package:ecommerce_app/provider/auth.dart';
 import 'package:ecommerce_app/provider/products.dart';
 import 'package:ecommerce_app/screens/auth_screen.dart';
 import 'package:ecommerce_app/screens/dashboard_screen.dart';
+import 'package:ecommerce_app/screens/edit_product_screen.dart';
 import 'package:ecommerce_app/screens/upload_product_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
       home: AuthScreen(),
       routes: {
         DashboardScreen.routeName: (ctx) => const DashboardScreen(),
+        EditProductScreen.routeName: (ctx) => const EditProductScreen(),
         UploadProductScreen.routeName: (ctx) => const UploadProductScreen(),
       },
     );
