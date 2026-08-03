@@ -2,11 +2,17 @@ import 'package:ecommerce_app/provider/products.dart';
 import 'package:flutter/material.dart';
 import 'package:ecommerce_app/screens/upload_product_screen.dart';
 import 'package:provider/provider.dart';
+enum BottomTabs {
+  home,
+  shop,
+  setting,
+}
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   static const routeName = '/dashboard';
+ 
 
   static const _categories = [
     _CategoryItem('🍔', true),
@@ -24,6 +30,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoading = true;
   String? _loadError;
 
+ 
+  
+
+  static const routes  = {
+    BottomTabs.home : '/dashboard',
+    BottomTabs.shop: '/edit-products',
+    BottomTabs.setting: '/settings',
+  };
+
+  void selectTab(BuildContext context, int index){
+    final selectedTab = BottomTabs.values[index];
+   
+    Navigator.of(context).pushReplacementNamed(routes[selectedTab]!);
+  }
   @override
   void initState() {
     super.initState();
@@ -112,6 +132,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        onTap: (value) => selectTab(context, value),
+        items: [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.shop), label: 'Shop',),
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings')
+      ]),
     );
   }
 }

@@ -255,31 +255,43 @@ class _ProductTile extends StatelessWidget {
                   ),
                 ),
               ),
-              Text.rich(
-                TextSpan(
-                  children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Text.rich(
                     TextSpan(
-                      text: product.price.toStringAsFixed(2),
-                      style: const TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      children: [
+                        TextSpan(
+                          text: product.price.toStringAsFixed(2),
+                          style: const TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: ' zł',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                       
+                      ],
                     ),
-                    const TextSpan(
-                      text: ' zł',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    style: const TextStyle(
+                      color: Color(0xFF343437),
+                      fontFamily: 'Poppins',
+                      height: 1,
                     ),
-                  ],
-                ),
-                style: const TextStyle(
-                  color: Color(0xFF343437),
-                  fontFamily: 'Poppins',
-                  height: 1,
-                ),
+                  ),
+                   IconButton(onPressed: (){
+                      Navigator.of(context).pushReplacementNamed('/upload-product');
+
+                   }, icon: Icon(Icons.edit)),
+                ],
+
               ),
+              
             ],
           ),
         ),

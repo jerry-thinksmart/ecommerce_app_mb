@@ -38,7 +38,7 @@ class ProductsProvider with ChangeNotifier {
       _client = client ?? http.Client();
 
   static const _databaseUrl =
-      'https://test-app-23cc7-default-rtdb.firebaseio.com/';
+      'https://ecommerce-app-75cf2-default-rtdb.firebaseio.com/';
 
   final http.Client _client;
   String? _authToken;
