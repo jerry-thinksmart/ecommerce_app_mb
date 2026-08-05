@@ -14,7 +14,7 @@ class Product {
     required this.shipDate,
   });
 
-  final String id;
+  final String? id;
   final String title;
   final String description;
   final double price;
@@ -47,11 +47,9 @@ class ProductsProvider with ChangeNotifier {
 
   List<Product> get products => List.unmodifiable(_products);
 
-  Product? findById(String id) {
-    for (final product in _products) {
-      if (product.id == id) return product;
-    }
-    return null;
+  Product findById(String? id) {
+    return _products.firstWhere((prod) => prod.id == id);
+  
   }
 
   void updateAuth({required String? authToken, required String? userId}) {
@@ -101,6 +99,23 @@ class ProductsProvider with ChangeNotifier {
       ),
     );
     notifyListeners();
+  }
+
+  Future<void> updateProduct(String id, Product newProduct) async {
+
+      final productIndex = _products.indexWhere((prod) => prod.id == id);
+
+      if(productIndex >=0){
+        final url = Uri.parse("https://ecommerce-app-75cf2-default-rtdb.firebaseio.com/products/$id.json");
+        await http.patch(url, body: json.encode({
+          'title': newProduct.title,
+          'price': newProduct.price,
+          'description': newProduct.description,
+        }));
+
+
+      }
+
   }
 
   Future<void> fetchProducts() async {

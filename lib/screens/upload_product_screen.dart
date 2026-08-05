@@ -27,6 +27,39 @@ class _UploadProductScreenState extends State<UploadProductScreen> {
     super.dispose();
   }
 
+  var _editedProduct = Product(
+    id: null,
+    title: '',
+    price: 0,
+    description: '',
+    imageUrl: '',
+    creatorId: '',
+    shipDate: DateTime.now()
+  );
+
+  var _initValues = {
+    'title': '',
+    'description': '',
+    'price': '',
+    // 'shipDate': '',
+  };
+
+  void didChangeDependencies() {
+      final productId = ModalRoute.of(context)!.settings.arguments as String?;
+      if (productId != null) {
+        _editedProduct =
+            Provider.of<ProductsProvider>(context, listen: false).findById(productId);
+        _initValues = {
+          'title': _editedProduct.title,
+          'description': _editedProduct.description,
+          'price': _editedProduct.price.toString(),
+          // 'shipDate': _editedProduct.shipDate!.toIso8601String(),
+         
+        };   
+      }
+    super.didChangeDependencies();
+  }
+
   Future<void> _selectShipDate() async {
     final now = DateTime.now();
     final selectedDate = await showDatePicker(
@@ -45,13 +78,18 @@ class _UploadProductScreenState extends State<UploadProductScreen> {
   }
 
   Future<void> _submit() async {
+    final productId = ModalRoute.of(context)!.settings.arguments as String?;
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
     _formKey.currentState!.save();
     setState(() => _isSubmitting = true);
-
+    if (_editedProduct.id != null) {
+          Provider.of<ProductsProvider>(context, listen: false)
+              .updateProduct(_editedProduct.id!, _editedProduct);
+    } else 
     try {
+      
       await context.read<ProductsProvider>().addProduct(
         title: _title,
         description: _description,
@@ -116,6 +154,7 @@ class _UploadProductScreenState extends State<UploadProductScreen> {
               ),
               const SizedBox(height: 24),
               TextFormField(
+                initialValue: _initValues["title"],
                 decoration: _decoration('Product name', Icons.shopping_bag),
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
@@ -129,6 +168,7 @@ class _UploadProductScreenState extends State<UploadProductScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                initialValue: _initValues["price"],
                 decoration: _decoration('Product price', Icons.attach_money),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -145,6 +185,7 @@ class _UploadProductScreenState extends State<UploadProductScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                initialValue: _initValues["description"],
                 decoration: _decoration('Product description', Icons.notes),
                 textCapitalization: TextCapitalization.sentences,
                 minLines: 3,
@@ -160,6 +201,7 @@ class _UploadProductScreenState extends State<UploadProductScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                // initialValue: _initValues["shipDate"],
                 controller: _shipDateController,
                 decoration: _decoration(
                   'Product ship date',

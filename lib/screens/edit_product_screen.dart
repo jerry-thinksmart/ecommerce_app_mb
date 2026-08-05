@@ -15,6 +15,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
   bool _isLoading = false;
   String? _error;
 
+   
+
+
   @override
   void initState() {
     super.initState();
@@ -224,7 +227,8 @@ class _ProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    print(product.id);
+        return Material(
       color: const Color(0xFFF8F8FB),
       borderRadius: BorderRadius.circular(4),
       clipBehavior: Clip.antiAlias,
@@ -285,7 +289,7 @@ class _ProductTile extends StatelessWidget {
                     ),
                   ),
                    IconButton(onPressed: (){
-                      Navigator.of(context).pushReplacementNamed('/upload-product');
+                      Navigator.of(context).pushReplacementNamed('/upload-product', arguments:  product.id);
 
                    }, icon: Icon(Icons.edit)),
                 ],
